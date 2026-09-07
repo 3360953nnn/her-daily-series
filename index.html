@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Her Daily Series · 抽盲盒</title>
+  <style>
+    :root{
+      --bg:#f7f3ee;
+      --panel:#fffdf9;
+      --line:#e9dfd4;
+      --text:#584c43;
+      --muted:#9a8d82;
+      --accent:#c9b29e;
+      --accent-2:#e8d7c7;
+      --gold:#d3a74e;
+      --shadow:0 10px 28px rgba(123,90,61,.12);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, #fffefb 0%, var(--bg) 44%, #f1ebe3 100%);
+      min-height:100vh;
+    }
+    .wrap{
+      max-width:1320px;
+      margin:0 auto;
+      padding:24px 18px 34px;
+    }
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom:22px;
+    }
+    .title h1{
+      margin:0;
+      font-size:32px;
+      line-height:1.1;
+      font-weight:800;
+      letter-spacing:.5px;
+    }
+    .title p{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .status-area{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      background:rgba(255,255,255,.72);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:10px 16px;
+      box-shadow:var(--shadow);
+      font-size:14px;
+      backdrop-filter: blur(10px);
+    }
+    .pill strong{font-weight:800}
+    button{
+      border:none;
+      cursor:pointer;
+      font:inherit;
+    }
+    .ghost-btn,.primary-btn,.secondary-btn{
+      border-radius:999px;
+      padding:11px 18px;
+      transition:.2s ease;
+      box-shadow:var(--shadow);
+    }
+    .ghost-btn{
+      background:#fff;
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+    .ghost-btn:hover,.secondary-btn:hover,.primary-btn:hover{transform:translateY(-1px)}
+    .primary-btn{
+      background:linear-gradient(135deg,#a98b75,#cfb59f);
+      color:#fff;
+    }
+    .secondary-btn{
+      background:#f2ebe3;
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+    .rule-box{
+      background:rgba(255,255,255,.68);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px 16px;
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:18px;
+      box-shadow:var(--shadow);
+    }
+    .box-grid{
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:16px;
+    }
+    .box-card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:14px 12px 16px;
+      box-shadow:var(--shadow);
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+      transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+    .box-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,0));
+      pointer-events:none;
+    }
+    .box-card:hover{transform:translateY(-4px)}
+    .box-card.opened{opacity:.55}
+    .box-card.opened:hover{transform:none}
+    .box-thumb{
+      width:100%;
+      aspect-ratio:3/4;
+      object-fit:cover;
+      border-radius:16px;
+      display:block;
+      background:#f4ede7;
+      margin-bottom:10px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.8);
+    }
+    .box-name{
+      font-size:14px;
+      font-weight:700;
+      margin-bottom:6px;
+    }
+    .box-tip{
+      color:var(--muted);
+      font-size:12px;
+    }
+    .box-card .opened-tag{
+      position:absolute;
+      right:12px;
+      top:12px;
+      background:rgba(88,76,67,.88);
+      color:#fff;
+      font-size:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      display:none;
+    }
+    .box-card.opened .opened-tag{display:block}
+
+    .footer-bar{
+      margin-top:22px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .progress{
+      flex:1;
+      min-width:280px;
+      background:rgba(255,255,255,.72);
+      border:1px solid var(--line);
+      border-radius:999px;
+      height:14px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+      position:relative;
+    }
+    .progress-fill{
+      width:0%;
+      height:100%;
+      background:linear-gradient(90deg,#d4bca9,#b8d1b5);
+      transition:width .25s ease;
+    }
+    .progress-label{
+      font-size:13px;
+      color:var(--muted);
+      min-width:150px;
+      text-align:right;
+    }
+
+    .drawer{
+      position:fixed;
+      top:0;
+      right:-430px;
+      width:min(430px,92vw);
+      height:100vh;
+      background:#fffefb;
+      border-left:1px solid var(--line);
+      box-shadow:-16px 0 36px rgba(81,58,36,.12);
+      transition:right .28s ease;
+      z-index:50;
+      display:flex;
+      flex-direction:column;
+    }
+    .drawer.show{right:0}
+    .drawer-head{
+      padding:18px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid var(--line);
+    }
+    .drawer-head h2{margin:0;font-size:22px}
+    .drawer-body{
+      padding:18px;
+      overflow:auto;
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+      align-content:start;
+    }
+    .bag-item{
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#fff;
+      padding:12px;
+      box-shadow:var(--shadow);
+    }
+    .bag-item img{
+      width:100%;
+      border-radius:14px;
+      aspect-ratio:1/1;
+      object-fit:contain;
+      display:block;
+      background:#fffdf9;
+      margin-bottom:10px;
+    }
+    .bag-item h3{margin:0 0 4px;font-size:15px}
+    .bag-item p{margin:0;color:var(--muted);font-size:12px}
+    .empty{
+      color:var(--muted);
+      font-size:15px;
+      padding:10px;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(49,37,28,.4);
+      backdrop-filter:blur(3px);
+      opacity:0;
+      pointer-events:none;
+      transition:.22s ease;
+      z-index:45;
+    }
+    .overlay.show{opacity:1;pointer-events:auto}
+
+    .modal{
+      position:fixed;
+      left:50%;top:50%;
+      transform:translate(-50%,-48%) scale(.95);
+      width:min(980px,95vw);
+      background:#fffefb;
+      border:1px solid var(--line);
+      border-radius:28px;
+      box-shadow:0 26px 70px rgba(71,52,36,.22);
+      padding:22px;
+      z-index:60;
+      opacity:0;
+      pointer-events:none;
+      transition:.25s ease;
+    }
+    .modal.show{
+      opacity:1;
+      pointer-events:auto;
+      transform:translate(-50%,-50%) scale(1);
+    }
+    .modal-inner{
+      display:grid;
+      grid-template-columns:minmax(320px, 1.15fr) minmax(250px, .85fr);
+      gap:20px;
+      align-items:stretch;
+    }
+    .reveal-stage{
+      border:1px solid var(--line);
+      border-radius:24px;
+      padding:18px;
+      background:#fffdf9;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:460px;
+      position:relative;
+      overflow:hidden;
+    }
+    .reveal-glow{
+      position:absolute;
+      width:68%; height:68%;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(224,200,173,.18), rgba(255,255,255,0) 72%);
+      filter:blur(10px);
+      animation:floatGlow 2.2s ease-in-out infinite alternate;
+      z-index:0;
+    }
+    @keyframes floatGlow{from{transform:translateY(-6px)}to{transform:translateY(6px)}}
+    .reveal-frame{
+      width:min(100%,590px);
+      height:min(70vh,650px);
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:1;
+    }
+    .reveal-img{
+      position:absolute;
+      inset:0;
+      width:100%;height:100%;
+      object-fit:contain;
+      transition:opacity .32s ease, transform .32s ease;
+      border-radius:20px;
+      image-rendering:auto;
+      backface-visibility:hidden;
+      -webkit-font-smoothing:antialiased;
+      z-index:2;
+    }
+    .reveal-img.final{
+      filter:none !important;
+    }
+    .reveal-img.silhouette{
+      filter:grayscale(1) brightness(.42) blur(1.2px) opacity(.9);
+      transform:scale(.96);
+    }
+    .reveal-frame.revealed .silhouette{opacity:0; transform:scale(1.04)}
+    .reveal-frame .final{opacity:0; transform:scale(.96)}
+    .reveal-frame.revealed .final{opacity:1; transform:scale(1)}
+    .question-mark{
+      position:absolute;
+      font-size:100px;
+      font-weight:900;
+      color:rgba(255,255,255,.96);
+      text-shadow:0 8px 24px rgba(0,0,0,.12);
+      transition:opacity .3s ease;
+      z-index:4;
+      user-select:none;
+    }
+    .reveal-frame.revealed .question-mark{opacity:0}
+    .burst{
+      position:absolute;
+      inset:0;
+      background:radial-gradient(circle, rgba(255,255,255,.42), rgba(255,255,255,0) 56%);
+      opacity:0;
+      transform:scale(.72);
+      pointer-events:none;
+      z-index:5;
+    }
+    .reveal-frame.revealed .burst{
+      animation:quickFlash .38s ease-out forwards;
+    }
+    @keyframes quickFlash{
+      0%{opacity:0;transform:scale(.72)}
+      32%{opacity:.55;transform:scale(.96)}
+      100%{opacity:0;transform:scale(1.16)}
+    }
+
+    .side-panel{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#f5eee7;
+      color:var(--muted);
+      font-size:13px;
+      border:1px solid var(--line);
+      width:max-content;
+    }
+    .chip.secret{
+      background:linear-gradient(135deg,#f7e8b7,#f2d68b);
+      color:#78571e;
+      border-color:#ecd48d;
+      font-weight:800;
+    }
+    .side-panel h2{
+      margin:2px 0 0;
+      font-size:30px;
+      line-height:1.15;
+    }
+    .side-panel p{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.7;
+    }
+    .btn-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .toast{
+      position:fixed;
+      left:50%; bottom:24px;
+      transform:translateX(-50%) translateY(20px);
+      background:rgba(72,57,45,.94);
+      color:#fff;
+      padding:12px 16px;
+      border-radius:999px;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+      opacity:0;
+      pointer-events:none;
+      transition:.22s ease;
+      z-index:80;
+      font-size:14px;
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+    @media (max-width:1180px){
+      .box-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+    }
+    @media (max-width:880px){
+      .modal-inner{grid-template-columns:1fr}
+      .box-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+      .title h1{font-size:26px}
+    }
+    @media (max-width:560px){
+      .wrap{padding:18px 12px 28px}
+      .box-grid{grid-template-columns:1fr 1fr; gap:12px}
+      .box-card{padding:10px}
+      .drawer-body{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>Her Daily Series · 抽盲盒</h1>
+        <p>点击盲盒即可拆开，出现人物剪影后再揭晓款式；下方点“收集”即可放入背包。</p>
+      </div>
+      <div class="status-area">
+        <div class="pill">当前批次：<strong id="batchText">第 1 批</strong></div>
+        <div class="pill">已收集：<strong id="collectionCount">0</strong> / 7 款</div>
+        <button class="ghost-btn" id="bagBtn">🎒 背包</button>
+      </div>
+    </div>
+
+    <div class="rule-box">
+      规则：每批 6 个盒子；前两批只会出现普通款；从第 3 批开始，每一批有 <strong>1/5 概率</strong> 随机将一个普通款替换成隐藏款。抽完一批后，会自动上新下一批 6 个盒子。
+    </div>
+
+    <div class="box-grid" id="boxGrid"></div>
+
+    <div class="footer-bar">
+      <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">本批进度：0 / 6</div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="drawer" id="drawer">
+    <div class="drawer-head">
+      <h2>我的背包</h2>
+      <button class="secondary-btn" id="closeBagBtn">关闭</button>
+    </div>
+    <div class="drawer-body" id="bagList"></div>
+  </div>
+
+  <div class="modal" id="revealModal">
+    <div class="modal-inner">
+      <div class="reveal-stage">
+        <div class="reveal-glow"></div>
+        <div class="reveal-frame" id="revealFrame">
+          <img class="reveal-img silhouette" id="silhouetteImg" alt="silhouette" />
+          <img class="reveal-img final" id="finalImg" alt="result" />
+          <div class="question-mark">?</div>
+          <div class="burst"></div>
+        </div>
+      </div>
+      <div class="side-panel">
+        <div id="itemChip" class="chip">待揭晓</div>
+        <h2 id="itemTitle">准备开盒</h2>
+        <p id="itemDesc">轻轻点开盒子，等一下就能看到今天抽到的小日常啦。</p>
+        <div class="btn-row">
+          <button class="primary-btn" id="collectBtn">收集</button>
+          <button class="secondary-btn" id="closeModalBtn">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const ITEMS = {
+      normal: [
+        {
+          id: 'no001',
+          name: 'NO.001 健身器材款',
+          short: '健身器材款',
+          desc: '认真生活的你，连运动的样子都很可爱。',
+          img: 'assets/no001_fitness.png',
+          secret: false
+        },
+        {
+          id: 'no002',
+          name: 'NO.002 运动款',
+          short: '运动款',
+          desc: '跑起来的你，真的很闪闪发光。',
+          img: 'assets/no002_sport.png',
+          secret: false
+        },
+        {
+          id: 'no003',
+          name: 'NO.003 花束款',
+          short: '花束款',
+          desc: '生活很普通，但也有很多浪漫的瞬间。',
+          img: 'assets/no003_flower.png',
+          secret: false
+        },
+        {
+          id: 'no004',
+          name: 'NO.004 学习款',
+          short: '学习款',
+          desc: '再难的题，也会有答案的时候。',
+          img: 'assets/no004_study.png',
+          secret: false
+        },
+        {
+          id: 'no005',
+          name: 'NO.005 散步款',
+          short: '散步款',
+          desc: '傍晚的风，会把疲惫轻轻吹散。',
+          img: 'assets/no005_walk.png',
+          secret: false
+        },
+        {
+          id: 'no006',
+          name: 'NO.006 长椅款',
+          short: '长椅款',
+          desc: '在平凡的长椅上，也有很温柔的时光。',
+          img: 'assets/no006_bench.png',
+          secret: false
+        }
+      ],
+      secret: {
+        id: 'secret',
+        name: '隐藏款 · 生日咖啡馆',
+        short: '隐藏款',
+        desc: '在属于你的生日夜晚里，也有只属于自己的小小闪光时刻。',
+        img: 'assets/secret_birthday.png',
+        secret: true
+      }
+    };
+
+    const boxGrid = document.getElementById('boxGrid');
+    const batchText = document.getElementById('batchText');
+    const collectionCount = document.getElementById('collectionCount');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+    const overlay = document.getElementById('overlay');
+    const drawer = document.getElementById('drawer');
+    const bagList = document.getElementById('bagList');
+    const revealModal = document.getElementById('revealModal');
+    const revealFrame = document.getElementById('revealFrame');
+    const silhouetteImg = document.getElementById('silhouetteImg');
+    const finalImg = document.getElementById('finalImg');
+    const itemChip = document.getElementById('itemChip');
+    const itemTitle = document.getElementById('itemTitle');
+    const itemDesc = document.getElementById('itemDesc');
+    const collectBtn = document.getElementById('collectBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const toast = document.getElementById('toast');
+
+    let batchNo = Number(localStorage.getItem('herDailyBatchNo')) || 1;
+    let currentBatch = [];
+    let currentOpenIndex = null;
+    let collection = loadCollection();
+
+    function loadCollection(){
+      const raw = localStorage.getItem('herDailyCollection');
+      if(!raw) return {};
+      try{return JSON.parse(raw)}catch(e){return {}};
+    }
+    function saveCollection(){
+      localStorage.setItem('herDailyCollection', JSON.stringify(collection));
+      localStorage.setItem('herDailyBatchNo', String(batchNo));
+    }
+    function shuffle(arr){
+      const copy = [...arr];
+      for(let i = copy.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+    function makeBatch(batchIndex){
+      const batch = shuffle(ITEMS.normal).map(item => ({...item, opened:false, collected:false}));
+      if(batchIndex >= 3 && Math.random() < 0.2){
+        const replaceIndex = Math.floor(Math.random() * 6);
+        batch[replaceIndex] = {...ITEMS.secret, opened:false, collected:false};
+      }
+      return batch;
+    }
+    function renderBatch(){
+      batchText.textContent = `第 ${batchNo} 批`;
+      boxGrid.innerHTML = '';
+      currentBatch.forEach((item, index) => {
+        const card = document.createElement('button');
+        card.className = 'box-card' + (item.collected ? ' opened' : '');
+        card.type = 'button';
+        card.innerHTML = `
+          <span class="opened-tag">已收集</span>
+          <img class="box-thumb" src="assets/box.png" alt="盲盒包装" />
+          <div class="box-name">盲盒 ${index + 1}</div>
+          <div class="box-tip">${item.collected ? '这盒已经收进背包' : '点击拆开看看抽到了什么'}</div>
+        `;
+        card.disabled = item.collected;
+        card.addEventListener('click', () => openBox(index));
+        boxGrid.appendChild(card);
+      });
+      updateProgress();
+    }
+    function updateProgress(){
+      const done = currentBatch.filter(item => item.collected).length;
+      progressFill.style.width = `${(done / 6) * 100}%`;
+      progressLabel.textContent = `本批进度：${done} / 6`;
+      const uniqueCollected = new Set(Object.keys(collection).filter(k => collection[k] > 0)).size;
+      collectionCount.textContent = uniqueCollected;
+      renderBag();
+      if(done === 6){
+        showToast(`第 ${batchNo} 批已抽完，下一批盲盒已上新 ✨`);
+        batchNo += 1;
+        currentBatch = makeBatch(batchNo);
+        saveCollection();
+        setTimeout(renderBatch, 900);
+      }
+    }
+    function openBox(index){
+      currentOpenIndex = index;
+      const item = currentBatch[index];
+      silhouetteImg.src = item.img;
+      finalImg.src = item.img;
+      revealFrame.classList.remove('revealed');
+      itemChip.className = 'chip';
+      itemChip.textContent = '剪影揭晓中…';
+      itemTitle.textContent = '正在拆盒';
+      itemDesc.textContent = '先看到一个模糊剪影，马上就能知道今天抽到哪一款了。';
+      collectBtn.disabled = true;
+      collectBtn.style.opacity = '.65';
+      overlay.classList.add('show');
+      revealModal.classList.add('show');
+      setTimeout(() => {
+        revealFrame.classList.add('revealed');
+        itemChip.className = item.secret ? 'chip secret' : 'chip';
+        itemChip.textContent = item.secret ? '✨ 隐藏款' : 'Normal';
+        itemTitle.textContent = item.name;
+        itemDesc.textContent = item.desc;
+        collectBtn.disabled = false;
+        collectBtn.style.opacity = '1';
+      }, 700);
+    }
+    function closeModal(){
+      revealModal.classList.remove('show');
+      overlay.classList.remove('show');
+    }
+    function collectCurrent(){
+      if(currentOpenIndex === null) return;
+      const item = currentBatch[currentOpenIndex];
+      item.opened = true;
+      item.collected = true;
+      collection[item.id] = (collection[item.id] || 0) + 1;
+      saveCollection();
+      renderBatch();
+      closeModal();
+      showToast(`已收集：${item.name}`);
+      currentOpenIndex = null;
+    }
+    function renderBag(){
+      bagList.innerHTML = '';
+      const allItems = [...ITEMS.normal, ITEMS.secret];
+      const owned = allItems.filter(item => collection[item.id]);
+      if(owned.length === 0){
+        bagList.innerHTML = '<div class="empty">背包还是空的，先去拆一个盲盒吧～</div>';
+        return;
+      }
+      owned.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'bag-item';
+        el.innerHTML = `
+          <img src="${item.img}" alt="${item.name}" />
+          <h3>${item.name}</h3>
+          <p>${item.secret ? '隐藏款' : '普通款'} · 已收集 ${collection[item.id]} 次</p>
+        `;
+        bagList.appendChild(el);
+      });
+    }
+    function showBag(){
+      drawer.classList.add('show');
+      overlay.classList.add('show');
+    }
+    function closeBag(){
+      drawer.classList.remove('show');
+      if(!revealModal.classList.contains('show')){
+        overlay.classList.remove('show');
+      }
+    }
+    let toastTimer = null;
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    document.getElementById('bagBtn').addEventListener('click', showBag);
+    document.getElementById('closeBagBtn').addEventListener('click', closeBag);
+    closeModalBtn.addEventListener('click', closeModal);
+    collectBtn.addEventListener('click', collectCurrent);
+    overlay.addEventListener('click', () => {
+      closeBag();
+      closeModal();
+    });
+
+    currentBatch = makeBatch(batchNo);
+    renderBatch();
+  </script>
+</body>
+</html>
